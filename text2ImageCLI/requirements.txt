@@ -1,0 +1,7 @@
+requests
+pillow
+opencv-python
+numpy
+ollama
+pyyaml
+rich

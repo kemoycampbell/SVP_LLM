@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processed Tasks</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h2 { color: #333; }
+        #current-time { font-size: 14px; margin-bottom: 10px; color: #555; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        th { background-color: #f4f4f4; }
+        img { max-width: 200px; max-height: 200px; }
+    </style>
+</head>
+<body>
+    <h2>Processed Tasks</h2>
+    <div id="current-time">Time: --:--:--</div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Client ID</th>
+                <th>Prompt</th>
+                <th>Image</th>
+            </tr>
+        </thead>
+        <tbody id="tasks-body">
+            <tr>
+                <td colspan="4">Loading tasks...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchTasks() {
+            try {
+                const response = await fetch('/processed-tasks-json');
+                const data = await response.json();
+
+                const tbody = document.getElementById('tasks-body');
+                tbody.innerHTML = ''; // clear existing rows
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">No tasks processed yet.</td></tr>';
+                } else {
+                    data.forEach((task, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${task.client_id}</td>
+                            <td>${task.prompt}</td>
+                            <td><img src="data:image/png;base64,${task.img_str}" alt="Generated Image"></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                // Update current time
+                const now = new Date();
+                document.getElementById('current-time').textContent =
+                    'Time: ' + now.toLocaleTimeString();
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        }
+
+        // Fetch every 1 second
+        setInterval(fetchTasks, 1000);
+        fetchTasks(); // initial load
+    </script>
+</body>
+</html>
