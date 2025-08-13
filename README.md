@@ -19,40 +19,29 @@ Key features:
 
 ## 📦 Architecture
 
-### Components Diagram
-
-```mermaid
-graph LR
-    A[User Input] --> B[Client: Prompt Cleaning]
-    B --> C[Client: Send Prompt to Server]
-    C --> D[Server: Flask API /generate/image]
-    D --> E[Task Queue / Background Worker]
-    E --> F[Stable Diffusion Pipeline]
-    F --> G[Base64 Encoded Image]
-    G --> H[Results Store]
-    H --> I[Client Polling / Display]
-```
 
 ### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant C as Client
-    participant S as Server
-    participant W as Worker
-    participant P as Pipeline
+    participant CLI as Client CLI
+    participant Ollama as Ollama  LLM
+    participant API as Image Gen API Server
 
-    U->>C: Enter prompt
-    C->>C: Clean prompt via LLM
-    C->>S: POST /generate/image
-    S->>W: Queue task
-    W->>P: Generate image
-    P->>W: Return image
-    W->>S: Store result in results_store
-    C->>S: GET /result/<client_id>
-    S->>C: Return base64 image
-    C->>C: Decode & display image
+    CLI->>Ollama: Send raw prompt
+    Ollama-->>CLI: Return polished prompt
+
+    CLI->>API: POST /generate/image {client_id, polished_prompt}
+    API-->>CLI: {"status":"queued","client_id":client_id}
+
+    loop Polling
+        CLI->>API: GET /result/<client_id>
+        alt image ready
+            API-->>CLI: {"status":"done","client_id":client_id,"image_base64":data}
+        else still processing
+            API-->>CLI: {"status":"no task pending" or "pending"}
+        end
+    end
 ```
 
 ---
